@@ -101,6 +101,20 @@ inline bool wait_until(
     while ((ret == 0) ||
           (((ret == -1) && errno == EINTR) ||
            ((ret != -1) && !WIFEXITED(status) && !WIFSIGNALED(status))));
+#elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
+    do
+    {
+        ret = ::waitpid(p.pid, &status, WNOHANG);
+        if (ret == 0)
+        {
+            timed_out = Clock::now() >= time_out;
+            if (timed_out)
+                return false;
+        }
+    }
+    while ((ret == 0) ||
+          (((ret == -1) && errno == EINTR) ||
+           ((ret != -1) && !WIFEXITED(status) && !WIFSIGNALED(status))));
 #else
     //if we do not have sigtimedwait, we fork off a child process  to get the signal in time
     pid_t timeout_pid = ::fork();
